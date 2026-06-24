@@ -1,4 +1,5 @@
-#include "runner.hpp"
+#include "runner.h"
+#include "config.h"
 #include <cstdlib>
 #include <iostream>
 #include <map>

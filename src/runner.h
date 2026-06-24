@@ -1,4 +1,4 @@
 #pragma once
-#include "config.hpp"
+#include "config.h"
 
 int run_pipeline(const Pipeline &p);
