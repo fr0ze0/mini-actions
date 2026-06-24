@@ -31,4 +31,4 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y clang-format
 
       - name: check formatting
-        run: clang-format --dry-run --Werror src/*.cpp src/*.hpp
+        run: clang-format --dry-run --Werror src/*.cpp src/*.h
