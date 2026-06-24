@@ -7,12 +7,11 @@
 #include <vector>
 
 // упорядочить job'ы по зависимостям (needs).
-// наивный topo-sort: крутимся, пока всё не разложим.
 static std::vector<const Job *> order_jobs(const Pipeline &p) {
     std::vector<const Job *> result;
     std::set<std::string> done;
 
-    while (result.size() < p.jobs.size()) {
+    while (result.size() < p.jobs.size()) {  //наивный topo-sort: крутимся, пока всё не разложим.
         bool progress = false;
         for (const auto &j : p.jobs) {
             if (done.count(j.name))
@@ -27,7 +26,7 @@ static std::vector<const Job *> order_jobs(const Pipeline &p) {
                 progress = true;
             }
         }
-        if (!progress) {
+        if (!progress) {            //проверка на циклические зависимости
             std::cerr << "[mini-actions] dependency cycle or missing job\n";
             break;
         }
@@ -48,7 +47,7 @@ int run_pipeline(const Pipeline &p) {
         std::cout << "\n[job] " << j->name << "  (image: " << (j->image.empty() ? "host" : j->image)
                   << ")\n";
 
-        if (!j->image.empty()) {
+        if (!j->image.empty()) {                        //выполнение команд в docker
             std::cout << "  pulling container...\n";
             if (sh("docker pull " + j->image) != 0) {
                 std::cerr << "  failed to pull image\n";
@@ -59,11 +58,11 @@ int run_pipeline(const Pipeline &p) {
         for (const auto &step : j->steps) {
             std::cout << "  step: " << step << "\n";
             std::string full;
-            if (!j->image.empty())
+            if (!j->image.empty())                    //создаём команду для докера
                 full = "docker run --rm " + j->image + " sh -c \"" + step + "\"";
             else
                 full = step;
-            int code = sh(full);
+            int code = sh(full);                     //проверка кода возврата
             if (code != 0) {
                 std::cerr << "  step failed (exit " << code << ")\n";
                 return code;
