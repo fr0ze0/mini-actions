@@ -1,0 +1,34 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install deps
+        run: sudo apt-get update && sudo apt-get install -y cmake g++
+
+      - name: configure
+        run: cmake -B build
+
+      - name: build
+        run: cmake --build build
+
+      - name: smoke test
+        run: ./build/mini-actions examples/local.pipe
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: check formatting
+        run: clang-format --dry-run --Werror src/*.cpp src/*.hpp
