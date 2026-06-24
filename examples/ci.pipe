@@ -1,0 +1,14 @@
+# демо-пайплайн для mini-actions
+pipeline demo-ci
+
+job build
+image ubuntu:22.04
+run apt-get update -qq && apt-get install -y -qq g++
+run echo "compiling project..."
+run g++ --version
+
+job test
+image ubuntu:22.04
+needs build
+run echo "running tests"
+run echo "ok"

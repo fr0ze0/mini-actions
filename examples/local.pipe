@@ -1,0 +1,8 @@
+pipeline smoke
+
+job hello
+run echo "mini-actions works"
+
+job after
+needs hello
+run echo "deps ok"
