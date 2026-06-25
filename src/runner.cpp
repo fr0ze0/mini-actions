@@ -1,4 +1,4 @@
-#include "runner.hpp"
+#include "runner.h"
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -42,7 +42,7 @@ static int run_in_container(const Job &j) {
     std::string cmd = "docker run -i --rm " + j.image + " sh -s";
     std::cout << "    $ " << cmd << "\n";
 
-    FILE *pipe = POPEN(cmd.c_str(), "w");
+    FILE *pipe = popen(cmd.c_str(), "w");
     if (!pipe) {
         std::cerr << "  cannot start docker\n";
         return 1;
@@ -52,7 +52,7 @@ static int run_in_container(const Job &j) {
     for (const auto &step : j.steps)
         std::fputs((step + "\n").c_str(), pipe);
 
-    int status = PCLOSE(pipe);
+    int status = pclose(pipe);
     return status;
 }
 
