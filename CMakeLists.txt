@@ -9,3 +9,7 @@ add_executable(mini-actions
     src/config.cpp
     src/runner.cpp
 )
+
+if(MINGW)
+    target_link_options(mini-actions PRIVATE -static -static-libgcc -static-libstdc++)
+endif()

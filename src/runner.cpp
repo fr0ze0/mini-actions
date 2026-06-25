@@ -1,13 +1,11 @@
-#include "runner.h"
-#include "config.h"
+#include "runner.hpp"
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
-#include <map>
 #include <set>
+#include <string>
 #include <vector>
 
-// упорядочить job'ы по зависимостям (needs).
-// наивный topo-sort: крутимся, пока всё не разложим.
 static std::vector<const Job *> order_jobs(const Pipeline &p) {
     std::vector<const Job *> result;
     std::set<std::string> done;
@@ -40,6 +38,24 @@ static int sh(const std::string &cmd) {
     return std::system(cmd.c_str());
 }
 
+static int run_in_container(const Job &j) {
+    std::string cmd = "docker run -i --rm " + j.image + " sh -s";
+    std::cout << "    $ " << cmd << "\n";
+
+    FILE *pipe = POPEN(cmd.c_str(), "w");
+    if (!pipe) {
+        std::cerr << "  cannot start docker\n";
+        return 1;
+    }
+
+    std::fputs("set -e\n", pipe);
+    for (const auto &step : j.steps)
+        std::fputs((step + "\n").c_str(), pipe);
+
+    int status = PCLOSE(pipe);
+    return status;
+}
+
 int run_pipeline(const Pipeline &p) {
     std::cout << "== pipeline: " << p.name << " ==\n";
     auto jobs = order_jobs(p);
@@ -54,19 +70,21 @@ int run_pipeline(const Pipeline &p) {
                 std::cerr << "  failed to pull image\n";
                 return 1;
             }
-        }
-
-        for (const auto &step : j->steps) {
-            std::cout << "  step: " << step << "\n";
-            std::string full;
-            if (!j->image.empty())
-                full = "docker run --rm " + j->image + " sh -c \"" + step + "\"";
-            else
-                full = step;
-            int code = sh(full);
+            for (const auto &step : j->steps)
+                std::cout << "  step: " << step << "\n";
+            int code = run_in_container(*j);
             if (code != 0) {
-                std::cerr << "  step failed (exit " << code << ")\n";
+                std::cerr << "  job failed (exit " << code << ")\n";
                 return code;
+            }
+        } else {
+            for (const auto &step : j->steps) {
+                std::cout << "  step: " << step << "\n";
+                int code = sh(step);
+                if (code != 0) {
+                    std::cerr << "  step failed (exit " << code << ")\n";
+                    return code;
+                }
             }
         }
         std::cout << "  [ok] " << j->name << "\n";
